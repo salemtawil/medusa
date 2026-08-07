@@ -36,6 +36,7 @@ work-start-server-*.log
 work-start-server-*.err.log
 work-*.log
 work-*.err.log
+work-*.jpg
 
 # env files (can opt-in for committing if needed)
 .env*

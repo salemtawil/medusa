@@ -54,6 +54,7 @@ def health() -> dict[str, str]:
     return {
         "status": "ok",
         "model": os.getenv("MEDUSA_YOLO_MODEL", "yolo11n.pt"),
+        "imageSize": os.getenv("MEDUSA_YOLO_IMAGE_SIZE", "416"),
     }
 
 
@@ -61,7 +62,11 @@ def health() -> dict[str, str]:
 def analyze_frame(payload: AnalyzeFrameRequest) -> AnalyzeFrameResponse:
     started_at = time.perf_counter()
     image_bytes = decode_data_url(payload.frame)
-    image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+    try:
+        image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+    except Exception as error:
+        raise HTTPException(status_code=400, detail="Frame de imagen invalido.") from error
+
     width, height = image.size
     model = get_model()
 
@@ -69,6 +74,8 @@ def analyze_frame(payload: AnalyzeFrameRequest) -> AnalyzeFrameResponse:
         image,
         classes=[0],
         conf=float(os.getenv("MEDUSA_PERSON_CONFIDENCE", "0.35")),
+        imgsz=int(os.getenv("MEDUSA_YOLO_IMAGE_SIZE", "416")),
+        max_det=int(os.getenv("MEDUSA_YOLO_MAX_DETECTIONS", "12")),
         verbose=False,
     )
 
