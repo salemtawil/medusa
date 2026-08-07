@@ -32,6 +32,11 @@ type AnalyzeResult = {
   next: string;
 };
 
+const ANALYSIS_FRAME_MAX_WIDTH = 512;
+const ANALYSIS_JPEG_QUALITY = 0.5;
+const DIRECT_VISION_API_URL = process.env.NEXT_PUBLIC_VISION_API_URL?.replace(/\/$/, "");
+const ANALYSIS_ENDPOINT = DIRECT_VISION_API_URL ? `${DIRECT_VISION_API_URL}/analyze-frame` : "/api/analyze-frame";
+
 export function DeviceCameraPanel() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -87,8 +92,8 @@ export function DeviceCameraPanel() {
         audio: false,
         video: {
           facingMode: { ideal: nextFacingMode },
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
+          width: { ideal: 960 },
+          height: { ideal: 540 },
         },
       });
 
@@ -136,13 +141,14 @@ export function DeviceCameraPanel() {
       return;
     }
 
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    const scale = Math.min(1, ANALYSIS_FRAME_MAX_WIDTH / video.videoWidth);
+    canvas.width = Math.round(video.videoWidth * scale);
+    canvas.height = Math.round(video.videoHeight * scale);
     canvas.getContext("2d")?.drawImage(video, 0, 0, canvas.width, canvas.height);
     setFrameCount((count) => count + 1);
     setLastFrame(new Date().toLocaleTimeString("es-VE", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
 
-    return canvas.toDataURL("image/jpeg", 0.72);
+    return canvas.toDataURL("image/jpeg", ANALYSIS_JPEG_QUALITY);
   }
 
   async function analyzeFrame() {
@@ -157,7 +163,7 @@ export function DeviceCameraPanel() {
     setAnalysisError(null);
 
     try {
-      const response = await fetch("/api/analyze-frame", {
+      const response = await fetch(ANALYSIS_ENDPOINT, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

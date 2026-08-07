@@ -21,6 +21,8 @@ npm test
 
 Cuando `VISION_API_URL` no existe, la web usa detecciones simuladas. Cuando existe, `/api/analyze-frame` reenvia los frames al backend real.
 
+Para pruebas con telefono, configura tambien `NEXT_PUBLIC_VISION_API_URL` con una URL HTTPS publica del backend. Asi el navegador envia los frames directo al Vision API y evita pasar por Vercel como intermediario.
+
 Ejemplo local:
 
 ```bash
@@ -73,7 +75,10 @@ La app en Vercel necesita que el backend IA sea accesible por HTTPS. Para prueba
 
 ```text
 VISION_API_URL=https://tu-tunel-https
+NEXT_PUBLIC_VISION_API_URL=https://tu-tunel-https
 ```
+
+`NEXT_PUBLIC_VISION_API_URL` reduce la latencia en el telefono porque llama directo a `/analyze-frame`. `VISION_API_URL` queda como respaldo del servidor cuando no se use la llamada directa.
 
 Despues, el backend puede moverse a un servidor con GPU, Jetson, RunPod, AWS, GCP o una mini PC industrial.
 
