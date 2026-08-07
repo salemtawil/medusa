@@ -34,6 +34,8 @@ work-dev-server-*.log
 work-dev-server-*.err.log
 work-start-server-*.log
 work-start-server-*.err.log
+work-*.log
+work-*.err.log
 
 # env files (can opt-in for committing if needed)
 .env*
