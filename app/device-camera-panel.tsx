@@ -36,6 +36,7 @@ const ANALYSIS_FRAME_MAX_WIDTH = 416;
 const ANALYSIS_JPEG_QUALITY = 0.45;
 const DIRECT_VISION_API_URL = process.env.NEXT_PUBLIC_VISION_API_URL?.replace(/\/$/, "");
 const ANALYSIS_ENDPOINT = DIRECT_VISION_API_URL ? `${DIRECT_VISION_API_URL}/analyze-frame` : "/api/analyze-frame";
+const ANALYSIS_FALLBACK_ENDPOINT = "/api/analyze-frame";
 
 export function DeviceCameraPanel() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -167,22 +168,10 @@ export function DeviceCameraPanel() {
     setAnalysisError(null);
 
     try {
-      const response = await fetch(ANALYSIS_ENDPOINT, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          frame,
-          source: deviceLabel,
-        }),
+      const result = await requestAnalysis({
+        frame,
+        source: deviceLabel,
       });
-
-      if (!response.ok) {
-        throw new Error("No se pudo analizar el frame.");
-      }
-
-      const result = (await response.json()) as AnalyzeResult;
       setAnalysisResult(result);
       setAnalysisState("ready");
     } catch (error) {
@@ -190,6 +179,43 @@ export function DeviceCameraPanel() {
       setAnalysisError(error instanceof Error ? error.message : "Fallo inesperado al analizar.");
     } finally {
       analysisInFlightRef.current = false;
+    }
+  }
+
+  async function requestAnalysis(payload: { frame: string; source: string }) {
+    const endpoints = DIRECT_VISION_API_URL ? [ANALYSIS_ENDPOINT, ANALYSIS_FALLBACK_ENDPOINT] : [ANALYSIS_ENDPOINT];
+    let lastError = "No se pudo analizar el frame.";
+
+    for (const endpoint of endpoints) {
+      try {
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "bypass-tunnel-reminder": "true",
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (response.ok) {
+          return (await response.json()) as AnalyzeResult;
+        }
+
+        lastError = await readAnalysisError(response);
+      } catch {
+        lastError = endpoint === ANALYSIS_ENDPOINT && DIRECT_VISION_API_URL ? "No hubo conexion directa con el Vision API." : "No se pudo contactar el analizador.";
+      }
+    }
+
+    throw new Error(lastError);
+  }
+
+  async function readAnalysisError(response: Response) {
+    try {
+      const payload = (await response.json()) as { message?: string; detail?: string; error?: string };
+      return payload.message || payload.detail || payload.error || `Analisis no disponible (${response.status}).`;
+    } catch {
+      return `Analisis no disponible (${response.status}).`;
     }
   }
 

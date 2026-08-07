@@ -56,6 +56,7 @@ async function proxyToVisionApi(body: unknown) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "bypass-tunnel-reminder": "true",
       },
       body: JSON.stringify(body),
       signal: controller.signal,
