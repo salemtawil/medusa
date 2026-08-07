@@ -226,6 +226,7 @@ a {
 .icon-button,
 .primary-action,
 .secondary-action,
+.danger-action,
 .segmented button,
 .card-action {
   min-height: 42px;
@@ -248,6 +249,7 @@ a {
 
 .primary-action,
 .secondary-action,
+.danger-action,
 .card-action {
   display: inline-flex;
   align-items: center;
@@ -266,6 +268,17 @@ a {
 .secondary-action,
 .card-action {
   color: #26434d;
+}
+
+.danger-action {
+  color: #ffffff;
+  background: var(--red);
+  border-color: var(--red);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .status-strip {
@@ -345,6 +358,225 @@ a {
 
 .metric.warn strong {
   color: var(--red);
+}
+
+.live-camera-panel {
+  margin-bottom: 18px;
+  padding: 16px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.live-camera-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+  gap: 14px;
+  align-items: stretch;
+}
+
+.live-stage {
+  position: relative;
+  min-height: 360px;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(19, 139, 150, 0.22), transparent 44%),
+    #0d1920;
+  border: 1px solid #163642;
+  border-radius: 8px;
+}
+
+.device-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 360px;
+  object-fit: cover;
+  background: #0d1920;
+}
+
+.camera-placeholder,
+.live-reticle {
+  position: absolute;
+  inset: 0;
+}
+
+.camera-placeholder {
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 10px;
+  padding: 24px;
+  color: #d8eaed;
+  text-align: center;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+.camera-placeholder strong {
+  font-size: 18px;
+}
+
+.camera-placeholder p {
+  max-width: 360px;
+  margin: 0;
+  color: #9db5bb;
+  line-height: 1.45;
+}
+
+.live-reticle {
+  z-index: 3;
+  pointer-events: none;
+}
+
+.live-reticle span:first-child {
+  position: absolute;
+  inset: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 7px;
+}
+
+.live-reticle span:last-child {
+  position: absolute;
+  top: 50%;
+  right: 18px;
+  left: 18px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(96, 216, 191, 0.62), transparent);
+}
+
+.live-control-panel {
+  display: grid;
+  gap: 13px;
+  align-content: start;
+  padding: 14px;
+  background: var(--panel-soft);
+  border: 1px solid #e1e8e8;
+  border-radius: 8px;
+}
+
+.live-control-header {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.live-control-header svg {
+  color: var(--teal);
+}
+
+.live-control-header strong,
+.live-control-header span {
+  display: block;
+}
+
+.live-control-header span,
+.analysis-placeholder p {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.live-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 9px;
+}
+
+.live-readings {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.live-readings div {
+  min-width: 0;
+  padding: 10px;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.live-readings span,
+.live-readings strong {
+  display: block;
+}
+
+.live-readings span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.live-readings strong {
+  margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+}
+
+.live-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 30px;
+  padding: 0 10px;
+  color: #17313f;
+  background: #e8f4f5;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.live-state span {
+  width: 8px;
+  height: 8px;
+  background: var(--green);
+  border-radius: 999px;
+}
+
+.live-state.idle span,
+.live-state.starting span {
+  background: var(--amber);
+}
+
+.live-state.blocked,
+.live-state.unsupported {
+  color: #7d261d;
+  background: var(--red-soft);
+}
+
+.live-state.blocked span,
+.live-state.unsupported span {
+  background: var(--red);
+}
+
+.analysis-placeholder {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  padding: 12px;
+  background: #ffffff;
+  border: 1px dashed var(--line-strong);
+  border-radius: 8px;
+}
+
+.analysis-placeholder svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--teal);
+}
+
+.analysis-placeholder p {
+  margin: 0;
+  line-height: 1.4;
+}
+
+.capture-canvas {
+  display: none;
 }
 
 .content-grid {
@@ -712,6 +944,10 @@ th {
     grid-template-columns: 1fr;
   }
 
+  .live-camera-grid {
+    grid-template-columns: 1fr;
+  }
+
   .rules-panel {
     max-width: none;
   }
@@ -795,6 +1031,7 @@ th {
   .icon-button,
   .primary-action,
   .secondary-action,
+  .danger-action,
   .segmented button,
   .card-action {
     min-height: 46px;
@@ -834,6 +1071,19 @@ th {
 
   .video-tile {
     min-height: 230px;
+  }
+
+  .live-camera-panel {
+    padding: 12px;
+  }
+
+  .live-stage,
+  .device-video {
+    min-height: 310px;
+  }
+
+  .live-readings {
+    grid-template-columns: 1fr;
   }
 
   .table-wrap {
@@ -894,7 +1144,7 @@ th {
     left: 0;
     z-index: 30;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     min-height: 64px;
     padding: 6px 7px 8px;
     background: rgba(255, 255, 255, 0.97);
@@ -910,7 +1160,7 @@ th {
     color: #5d7078;
     text-decoration: none;
     border-radius: 8px;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 800;
   }
 
@@ -947,6 +1197,11 @@ th {
 
   .video-tile {
     min-height: 218px;
+  }
+
+  .live-stage,
+  .device-video {
+    min-height: 260px;
   }
 
   .worker-one {

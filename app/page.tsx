@@ -3,7 +3,6 @@ import {
   Camera,
   ChevronRight,
   Download,
-  Gauge,
   LayoutDashboard,
   Menu,
   Plus,
@@ -13,6 +12,7 @@ import {
   TriangleAlert,
   Video,
 } from "lucide-react";
+import { DeviceCameraPanel } from "./device-camera-panel";
 
 const cameras = [
   {
@@ -109,6 +109,7 @@ const rules = [
 
 const navItems = [
   ["Operacion", "#operacion", LayoutDashboard],
+  ["En vivo", "#en-vivo", Camera],
   ["Camaras", "#camaras", Video],
   ["Eventos", "#eventos", Bell],
   ["Reglas", "#reglas", SlidersHorizontal],
@@ -216,6 +217,8 @@ export default function Home() {
             <small>Tracks activos</small>
           </article>
         </section>
+
+        <DeviceCameraPanel />
 
         <section className="content-grid">
           <div className="camera-section" id="camaras">
