@@ -62,7 +62,7 @@ export function DeviceCameraPanel() {
     }, 900);
     const interval = window.setInterval(() => {
       void analyzeFrame();
-    }, 3000);
+    }, 1500);
 
     return () => {
       window.clearTimeout(warmup);
@@ -271,7 +271,7 @@ export function DeviceCameraPanel() {
             {analysisState === "analyzing" ? <Loader2 className="spin-icon" size={17} aria-hidden="true" /> : <Activity size={17} aria-hidden="true" />}
             <div>
               <strong>{cameraState === "live" ? "Analisis continuo activo" : "Analisis continuo en espera"}</strong>
-              <span>Medusa analiza un frame cada 3 s mientras la camara esta encendida.</span>
+              <span>Medusa analiza un frame cada 1.5 s mientras la camara esta encendida.</span>
             </div>
           </div>
 

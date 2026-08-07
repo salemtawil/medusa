@@ -37,6 +37,7 @@ test("server-renders the Medusa operations dashboard", async () => {
   assert.match(html, /Camara del dispositivo/);
   assert.match(html, /Iniciar camara/);
   assert.match(html, /Analisis continuo en espera/);
+  assert.match(html, /cada 1\.5 s/);
   assert.match(html, /Capturar evidencia/);
   assert.match(html, /Eventos recientes/);
   assert.match(html, /Reglas activas/);
