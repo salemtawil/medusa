@@ -22,6 +22,8 @@
 .DS_Store
 *.pem
 *.pt
+__pycache__/
+*.py[cod]
 
 # debug
 npm-debug.log*
