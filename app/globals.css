@@ -510,25 +510,47 @@ button:disabled {
   gap: 9px;
 }
 
-.auto-toggle {
+.continuous-status {
   display: flex;
   gap: 9px;
   align-items: center;
-  min-height: 42px;
-  padding: 0 10px;
+  min-height: 56px;
+  padding: 10px;
   color: #26434d;
   background: #ffffff;
   border: 1px solid var(--line);
   border-radius: 8px;
-  font-size: 13px;
-  font-weight: 800;
 }
 
-.auto-toggle input {
-  width: 18px;
-  height: 18px;
-  margin: 0;
-  accent-color: var(--teal);
+.continuous-status svg {
+  flex: 0 0 auto;
+  color: var(--amber);
+}
+
+.continuous-status.active {
+  color: #123f31;
+  background: var(--green-soft);
+  border-color: #b6e2d2;
+}
+
+.continuous-status.active svg {
+  color: var(--green);
+}
+
+.continuous-status strong,
+.continuous-status span {
+  display: block;
+}
+
+.continuous-status strong {
+  font-size: 13px;
+}
+
+.continuous-status span {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
 }
 
 .live-readings {

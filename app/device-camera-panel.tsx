@@ -36,12 +36,12 @@ export function DeviceCameraPanel() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const analysisInFlightRef = useRef(false);
   const [cameraState, setCameraState] = useState<CameraState>("idle");
   const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
   const [frameCount, setFrameCount] = useState(0);
   const [lastFrame, setLastFrame] = useState<string | null>(null);
   const [deviceLabel, setDeviceLabel] = useState("Camara local");
-  const [autoAnalyze, setAutoAnalyze] = useState(false);
   const [analysisState, setAnalysisState] = useState<"idle" | "analyzing" | "ready" | "error">("idle");
   const [analysisResult, setAnalysisResult] = useState<AnalyzeResult | null>(null);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
@@ -53,16 +53,22 @@ export function DeviceCameraPanel() {
   }, []);
 
   useEffect(() => {
-    if (!autoAnalyze || cameraState !== "live") {
+    if (cameraState !== "live") {
       return;
     }
 
+    const warmup = window.setTimeout(() => {
+      void analyzeFrame();
+    }, 900);
     const interval = window.setInterval(() => {
       void analyzeFrame();
-    }, 3500);
+    }, 3000);
 
-    return () => window.clearInterval(interval);
-  }, [autoAnalyze, cameraState]);
+    return () => {
+      window.clearTimeout(warmup);
+      window.clearInterval(interval);
+    };
+  }, [cameraState, deviceLabel]);
 
   async function startCamera(nextFacingMode = facingMode) {
     if (!navigator.mediaDevices?.getUserMedia) {
@@ -74,6 +80,9 @@ export function DeviceCameraPanel() {
 
     try {
       stopCamera();
+      setAnalysisResult(null);
+      setAnalysisError(null);
+      setAnalysisState("idle");
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: false,
         video: {
@@ -101,7 +110,7 @@ export function DeviceCameraPanel() {
   function stopCamera() {
     streamRef.current?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
-    setAutoAnalyze(false);
+    analysisInFlightRef.current = false;
 
     if (videoRef.current) {
       videoRef.current.srcObject = null;
@@ -139,10 +148,11 @@ export function DeviceCameraPanel() {
   async function analyzeFrame() {
     const frame = captureFrame();
 
-    if (!frame || analysisState === "analyzing") {
+    if (!frame || analysisInFlightRef.current) {
       return;
     }
 
+    analysisInFlightRef.current = true;
     setAnalysisState("analyzing");
     setAnalysisError(null);
 
@@ -168,6 +178,8 @@ export function DeviceCameraPanel() {
     } catch (error) {
       setAnalysisState("error");
       setAnalysisError(error instanceof Error ? error.message : "Fallo inesperado al analizar.");
+    } finally {
+      analysisInFlightRef.current = false;
     }
   }
 
@@ -229,7 +241,7 @@ export function DeviceCameraPanel() {
             <Video size={19} aria-hidden="true" />
             <div>
               <strong>{deviceLabel}</strong>
-              <span>{cameraState === "live" ? "Fuente activa" : "Fuente local"}</span>
+              <span>{cameraState === "live" ? "Supervision continua" : "Fuente local"}</span>
             </div>
           </div>
 
@@ -251,23 +263,17 @@ export function DeviceCameraPanel() {
             </button>
             <button className="secondary-action" disabled={cameraState !== "live"} onClick={captureFrame} type="button">
               <ScanLine size={17} aria-hidden="true" />
-              Capturar frame
-            </button>
-            <button className="secondary-action" disabled={cameraState !== "live"} onClick={() => void analyzeFrame()} type="button">
-              {analysisState === "analyzing" ? <Loader2 className="spin-icon" size={17} aria-hidden="true" /> : <Activity size={17} aria-hidden="true" />}
-              Analizar frame
+              Capturar evidencia
             </button>
           </div>
 
-          <label className="auto-toggle">
-            <input
-              checked={autoAnalyze}
-              disabled={cameraState !== "live"}
-              onChange={(event) => setAutoAnalyze(event.target.checked)}
-              type="checkbox"
-            />
-            <span>Analisis automatico cada 3.5 s</span>
-          </label>
+          <div className={`continuous-status ${cameraState === "live" ? "active" : ""}`}>
+            {analysisState === "analyzing" ? <Loader2 className="spin-icon" size={17} aria-hidden="true" /> : <Activity size={17} aria-hidden="true" />}
+            <div>
+              <strong>{cameraState === "live" ? "Analisis continuo activo" : "Analisis continuo en espera"}</strong>
+              <span>Medusa analiza un frame cada 3 s mientras la camara esta encendida.</span>
+            </div>
+          </div>
 
           <div className="live-readings" aria-label="Estado de captura">
             <div>
@@ -279,7 +285,7 @@ export function DeviceCameraPanel() {
               <strong>{lastFrame ?? "--"}</strong>
             </div>
             <div>
-              <span>Proximo paso</span>
+              <span>Latencia IA</span>
               <strong>{analysisResult ? `${analysisResult.latencyMs} ms` : "Backend IA"}</strong>
             </div>
           </div>
@@ -332,7 +338,7 @@ export function DeviceCameraPanel() {
           ) : (
             <div className="analysis-placeholder">
               <Square size={14} aria-hidden="true" />
-              <p>Captura y analiza un frame para probar el circuito Medusa → API → resultado IA.</p>
+              <p>Inicia la camara y Medusa comenzara a supervisar de forma continua.</p>
             </div>
           )}
 
