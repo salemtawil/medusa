@@ -1,100 +1,82 @@
-# vinext-starter
+# Medusa
 
-A clean full-stack starter running on
-[vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and
-Drizzle support.
+Medusa es una app web para monitoreo industrial de EPP. La web vive en Next.js/Vercel y el procesamiento de vision corre en un servicio separado para poder usar modelos IA.
 
-## Prerequisites
+## Estado actual
 
-- Node.js `>=22.13.0`
+- Dashboard responsive para telefono y escritorio.
+- Camara del dispositivo desde navegador.
+- Captura y analisis de frames.
+- API mock en `/api/analyze-frame`.
+- Backend local `services/vision-api` con FastAPI + Ultralytics YOLO para detectar personas reales.
 
-## Quick Start
+## Web
 
 ```bash
 npm install
 npm run dev
 npm run build
+npm test
 ```
 
-This starter does not use `wrangler.jsonc`.
+Cuando `VISION_API_URL` no existe, la web usa detecciones simuladas. Cuando existe, `/api/analyze-frame` reenvia los frames al backend real.
 
-## Included Shape
+Ejemplo local:
 
-- edit site code under `app/`
-- `.openai/hosting.json` declares optional Sites D1 and R2 bindings
-- `vite.config.ts` simulates declared bindings for local development
-- `db/schema.ts` starts intentionally empty
-- `examples/d1/` contains an optional D1 example surface
-- `drizzle.config.ts` supports local migration generation when needed
+```bash
+copy .env.example .env.local
+npm run dev
+```
 
-## Workspace Auth Headers
+## Vision API local
 
-Signed-in visitors receive both `oai-authenticated-user-id` and `oai-authenticated-user-email`. Private Sites require every visitor to sign in; public Sites may also have anonymous visitors, for whom neither header is present.
+Desde Windows:
 
-The user ID is stable for the same user on the same Site and different across Sites. Email and name are intended for display or contact purposes.
+```bash
+cd services\vision-api
+start-vision-api.cmd
+```
 
-SIWC-authenticated workspace sites may also receive
-`oai-authenticated-user-full-name` when the user's SIWC profile has a non-empty
-`name` claim. The full-name value is percent-encoded UTF-8 and is accompanied by
-`oai-authenticated-user-full-name-encoding: percent-encoded-utf-8`.
+El primer analisis puede tardar porque Ultralytics descarga el modelo configurado en `MEDUSA_YOLO_MODEL`.
 
-Treat the full name as optional and fall back to email when it is absent:
+Endpoints:
 
-```tsx
-import { headers } from "next/headers";
+- `GET /health`
+- `POST /analyze-frame`
 
-export default async function Home() {
-  const requestHeaders = await headers();
-  const userId = requestHeaders.get("oai-authenticated-user-id");
-  const email = requestHeaders.get("oai-authenticated-user-email");
-  const encodedFullName = requestHeaders.get("oai-authenticated-user-full-name");
-  const fullName =
-    encodedFullName &&
-    requestHeaders.get("oai-authenticated-user-full-name-encoding") ===
-      "percent-encoded-utf-8"
-      ? decodeURIComponent(encodedFullName)
-      : null;
+Payload:
 
-  const displayName = fullName ?? email;
-  // ...
+```json
+{
+  "frame": "data:image/jpeg;base64,...",
+  "source": "device-camera"
 }
 ```
 
-## Optional Dispatch-Owned ChatGPT Sign-In
+Respuesta compatible con la app:
 
-Import the ready-to-use helpers from `app/chatgpt-auth.ts` when the site needs
-optional or required ChatGPT sign-in:
+```json
+{
+  "mode": "yolo",
+  "summary": {
+    "people": 1,
+    "compliance": 100,
+    "alerts": 0
+  },
+  "detections": []
+}
+```
 
-- Use `getChatGPTUser()` for optional signed-in UI.
-- Use `requireChatGPTUser(returnTo)` for server-rendered pages that should send
-  anonymous visitors through Sign in with ChatGPT.
-- Use `chatGPTSignInPath(returnTo)` and `chatGPTSignOutPath(returnTo)` for
-  browser links or actions.
-- Pass a same-origin relative `returnTo` path for the destination after sign-in
-  or sign-out. The helper validates and safely encodes it.
-- Mark protected pages with `export const dynamic = "force-dynamic"` because
-  they depend on per-request identity headers.
+## Produccion
 
-Dispatch owns `/signin-with-chatgpt`, `/signout-with-chatgpt`, `/callback`, the
-OAuth cookies, and identity header injection. Do not implement app routes for
-those reserved paths. Routes that do not import and call the helper remain
-anonymous-compatible.
+La app en Vercel necesita que el backend IA sea accesible por HTTPS. Para pruebas puedes usar un tunel HTTPS hacia `http://127.0.0.1:8000` y configurar en Vercel:
 
-SIWC establishes identity only; it does not prove workspace membership. Use the
-Sites hosting platform's access policy controls for workspace-wide restrictions,
-or enforce explicit server-side membership or allowlist checks.
+```text
+VISION_API_URL=https://tu-tunel-https
+```
 
-Use SIWC for account pages, user-specific dashboards, saved records, and write
-actions tied to the current ChatGPT user. Leave public content anonymous.
+Despues, el backend puede moverse a un servidor con GPU, Jetson, RunPod, AWS, GCP o una mini PC industrial.
 
-## Useful Commands
+## Siguiente fase
 
-- `npm run dev`: start local development
-- `npm run build`: verify the vinext build output
-- `npm test`: build the starter and verify its rendered loading skeleton
-- `npm run db:generate`: generate Drizzle migrations after schema changes
-
-## Learn More
-
-- [vinext Documentation](https://github.com/cloudflare/vinext)
-- [Drizzle D1 Guide](https://orm.drizzle.team/docs/get-started/d1-new)
+El backend actual detecta personas con YOLO. Para casco, chaleco y otros EPP hay que conectar un modelo especializado o entrenar uno propio con datos del entorno real.

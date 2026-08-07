@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 type CameraState = "idle" | "starting" | "live" | "blocked" | "unsupported";
 type DetectionStatus = "ok" | "warning" | "missing";
 type AnalyzeResult = {
-  mode: "mock";
+  mode: "mock" | "yolo";
   source: string;
   frameBytes: number;
   latencyMs: number;
@@ -206,6 +206,22 @@ export function DeviceCameraPanel() {
             <span />
             <span />
           </div>
+          {cameraState === "live" && analysisResult
+            ? analysisResult.detections.map((detection) => (
+                <span
+                  className={`vision-box ${detection.status}`}
+                  key={detection.id}
+                  style={{
+                    left: `${detection.box[0]}%`,
+                    top: `${detection.box[1]}%`,
+                    width: `${detection.box[2] - detection.box[0]}%`,
+                    height: `${detection.box[3] - detection.box[1]}%`,
+                  }}
+                >
+                  {detection.label} {detection.confidence.toFixed(2)}
+                </span>
+              ))
+            : null}
         </div>
 
         <aside className="live-control-panel">
@@ -271,6 +287,10 @@ export function DeviceCameraPanel() {
           {analysisResult ? (
             <div className="analysis-result" aria-label="Resultado de analisis IA simulado">
               <div className="analysis-summary">
+                <div>
+                  <span>Modo</span>
+                  <strong>{analysisResult.mode.toUpperCase()}</strong>
+                </div>
                 <div>
                   <span>Personas</span>
                   <strong>{analysisResult.summary.people}</strong>

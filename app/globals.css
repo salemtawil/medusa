@@ -449,6 +449,30 @@ button:disabled {
   background: linear-gradient(90deg, transparent, rgba(96, 216, 191, 0.62), transparent);
 }
 
+.vision-box {
+  position: absolute;
+  z-index: 4;
+  min-width: 74px;
+  min-height: 42px;
+  padding: 4px 6px;
+  color: #ffffff;
+  border: 2px solid #60d8bf;
+  border-radius: 7px;
+  box-shadow: 0 0 0 1px rgba(8, 20, 24, 0.4);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+}
+
+.vision-box.warning {
+  border-color: #f5ad42;
+}
+
+.vision-box.missing {
+  border-color: #ff7161;
+}
+
 .live-control-panel {
   display: grid;
   gap: 13px;
@@ -603,7 +627,7 @@ button:disabled {
 
 .analysis-summary {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -1235,7 +1259,7 @@ th {
   }
 
   .analysis-summary {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .table-wrap {
