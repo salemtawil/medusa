@@ -22,6 +22,19 @@ export async function POST(request: Request) {
       if (proxiedResponse) {
         return proxiedResponse;
       }
+
+      return NextResponse.json(
+        {
+          error: "VISION_API_UNAVAILABLE",
+          message: "El backend YOLO no respondio. No se generaron detecciones simuladas.",
+        },
+        {
+          status: 503,
+          headers: {
+            "x-medusa-vision-backend": "vision-api-unavailable",
+          },
+        },
+      );
     }
 
     return mockAnalyzeFrame(frame, source, startedAt);

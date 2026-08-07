@@ -79,6 +79,48 @@ test("analyzes a frame through the mock vision API", async () => {
   assert.ok(payload.detections.length >= 3);
 });
 
+test("does not fake detections when the configured vision backend is unavailable", async () => {
+  const previousVisionApiUrl = process.env.VISION_API_URL;
+  process.env.VISION_API_URL = "http://127.0.0.1:9";
+
+  try {
+    const workerUrl = new URL("../dist/server/index.js", import.meta.url);
+    workerUrl.searchParams.set("test", `api-unavailable-${process.pid}-${Date.now()}`);
+    const { default: worker } = await import(workerUrl.href);
+
+    const response = await worker.fetch(
+      new Request("http://localhost/api/analyze-frame", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          frame: "data:image/jpeg;base64,ZmFrZS1mcmFtZS1kYXRh",
+          source: "test-camera",
+        }),
+      }),
+      {
+        ASSETS: {
+          fetch: async () => new Response("Not found", { status: 404 }),
+        },
+      },
+      {
+        waitUntil() {},
+        passThroughOnException() {},
+      },
+    );
+
+    assert.equal(response.status, 503);
+    assert.equal(response.headers.get("x-medusa-vision-backend"), "vision-api-unavailable");
+    const payload = await response.json();
+    assert.equal(payload.error, "VISION_API_UNAVAILABLE");
+  } finally {
+    if (previousVisionApiUrl === undefined) {
+      delete process.env.VISION_API_URL;
+    } else {
+      process.env.VISION_API_URL = previousVisionApiUrl;
+    }
+  }
+});
+
 test("removes disposable starter preview code paths", async () => {
   const [page, layout, packageJson] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),

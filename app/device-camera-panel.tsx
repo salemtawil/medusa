@@ -218,7 +218,7 @@ export function DeviceCameraPanel() {
             <span />
             <span />
           </div>
-          {cameraState === "live" && analysisResult
+          {cameraState === "live" && analysisResult?.mode === "yolo"
             ? analysisResult.detections.map((detection) => (
                 <span
                   className={`vision-box ${detection.status}`}
@@ -291,7 +291,7 @@ export function DeviceCameraPanel() {
           </div>
 
           {analysisResult ? (
-            <div className="analysis-result" aria-label="Resultado de analisis IA simulado">
+            <div className="analysis-result" aria-label="Resultado de analisis IA">
               <div className="analysis-summary">
                 <div>
                   <span>Modo</span>
@@ -332,7 +332,9 @@ export function DeviceCameraPanel() {
                   ))}
                 </div>
               ) : (
-                <p className="clear-analysis">Sin alertas simuladas en este frame.</p>
+                <p className="clear-analysis">
+                  {analysisResult.mode === "yolo" ? "Sin alertas reales en este frame." : "Resultado simulado, no apto para supervision real."}
+                </p>
               )}
             </div>
           ) : (
