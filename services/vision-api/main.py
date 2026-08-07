@@ -54,7 +54,7 @@ def health() -> dict[str, str]:
     return {
         "status": "ok",
         "model": os.getenv("MEDUSA_YOLO_MODEL", "yolo11n.pt"),
-        "imageSize": os.getenv("MEDUSA_YOLO_IMAGE_SIZE", "416"),
+        "imageSize": os.getenv("MEDUSA_YOLO_IMAGE_SIZE", "320"),
     }
 
 
@@ -74,7 +74,7 @@ def analyze_frame(payload: AnalyzeFrameRequest) -> AnalyzeFrameResponse:
         image,
         classes=[0],
         conf=float(os.getenv("MEDUSA_PERSON_CONFIDENCE", "0.35")),
-        imgsz=int(os.getenv("MEDUSA_YOLO_IMAGE_SIZE", "416")),
+        imgsz=int(os.getenv("MEDUSA_YOLO_IMAGE_SIZE", "320")),
         max_det=int(os.getenv("MEDUSA_YOLO_MAX_DETECTIONS", "12")),
         verbose=False,
     )

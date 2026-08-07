@@ -32,8 +32,8 @@ type AnalyzeResult = {
   next: string;
 };
 
-const ANALYSIS_FRAME_MAX_WIDTH = 512;
-const ANALYSIS_JPEG_QUALITY = 0.5;
+const ANALYSIS_FRAME_MAX_WIDTH = 416;
+const ANALYSIS_JPEG_QUALITY = 0.45;
 const DIRECT_VISION_API_URL = process.env.NEXT_PUBLIC_VISION_API_URL?.replace(/\/$/, "");
 const ANALYSIS_ENDPOINT = DIRECT_VISION_API_URL ? `${DIRECT_VISION_API_URL}/analyze-frame` : "/api/analyze-frame";
 
@@ -152,9 +152,13 @@ export function DeviceCameraPanel() {
   }
 
   async function analyzeFrame() {
+    if (analysisInFlightRef.current) {
+      return;
+    }
+
     const frame = captureFrame();
 
-    if (!frame || analysisInFlightRef.current) {
+    if (!frame) {
       return;
     }
 
