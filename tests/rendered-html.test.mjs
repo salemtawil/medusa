@@ -36,10 +36,45 @@ test("server-renders the Medusa operations dashboard", async () => {
   assert.match(html, /Navegacion movil/);
   assert.match(html, /Camara del dispositivo/);
   assert.match(html, /Iniciar camara/);
+  assert.match(html, /Analizar frame/);
   assert.match(html, /Eventos recientes/);
   assert.match(html, /Reglas activas/);
   assert.match(html, /Fuentes de video/);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton|Your site is taking shape/i);
+});
+
+test("analyzes a frame through the mock vision API", async () => {
+  const workerUrl = new URL("../dist/server/index.js", import.meta.url);
+  workerUrl.searchParams.set("test", `api-${process.pid}-${Date.now()}`);
+  const { default: worker } = await import(workerUrl.href);
+
+  const response = await worker.fetch(
+    new Request("http://localhost/api/analyze-frame", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        frame: "data:image/jpeg;base64,ZmFrZS1mcmFtZS1kYXRh",
+        source: "test-camera",
+      }),
+    }),
+    {
+      ASSETS: {
+        fetch: async () => new Response("Not found", { status: 404 }),
+      },
+    },
+    {
+      waitUntil() {},
+      passThroughOnException() {},
+    },
+  );
+
+  assert.equal(response.status, 200);
+  const payload = await response.json();
+  assert.equal(payload.mode, "mock");
+  assert.equal(payload.source, "test-camera");
+  assert.ok(payload.summary.people >= 1);
+  assert.ok(Array.isArray(payload.detections));
+  assert.ok(payload.detections.length >= 3);
 });
 
 test("removes disposable starter preview code paths", async () => {

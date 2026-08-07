@@ -1,9 +1,36 @@
 "use client";
 
-import { Camera, CameraOff, FlipHorizontal, ScanLine, Square, Video } from "lucide-react";
+import { Activity, Camera, CameraOff, FlipHorizontal, Loader2, ScanLine, Square, Video } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 type CameraState = "idle" | "starting" | "live" | "blocked" | "unsupported";
+type DetectionStatus = "ok" | "warning" | "missing";
+type AnalyzeResult = {
+  mode: "mock";
+  source: string;
+  frameBytes: number;
+  latencyMs: number;
+  analyzedAt: string;
+  summary: {
+    people: number;
+    compliance: number;
+    alerts: number;
+  };
+  detections: Array<{
+    id: string;
+    label: string;
+    confidence: number;
+    box: [number, number, number, number];
+    status: DetectionStatus;
+  }>;
+  alerts: Array<{
+    type: string;
+    severity: string;
+    confidence: number;
+    state: string;
+  }>;
+  next: string;
+};
 
 export function DeviceCameraPanel() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -14,12 +41,28 @@ export function DeviceCameraPanel() {
   const [frameCount, setFrameCount] = useState(0);
   const [lastFrame, setLastFrame] = useState<string | null>(null);
   const [deviceLabel, setDeviceLabel] = useState("Camara local");
+  const [autoAnalyze, setAutoAnalyze] = useState(false);
+  const [analysisState, setAnalysisState] = useState<"idle" | "analyzing" | "ready" | "error">("idle");
+  const [analysisResult, setAnalysisResult] = useState<AnalyzeResult | null>(null);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
 
   useEffect(() => {
     return () => {
       stopCamera();
     };
   }, []);
+
+  useEffect(() => {
+    if (!autoAnalyze || cameraState !== "live") {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      void analyzeFrame();
+    }, 3500);
+
+    return () => window.clearInterval(interval);
+  }, [autoAnalyze, cameraState]);
 
   async function startCamera(nextFacingMode = facingMode) {
     if (!navigator.mediaDevices?.getUserMedia) {
@@ -58,6 +101,7 @@ export function DeviceCameraPanel() {
   function stopCamera() {
     streamRef.current?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
+    setAutoAnalyze(false);
 
     if (videoRef.current) {
       videoRef.current.srcObject = null;
@@ -88,6 +132,43 @@ export function DeviceCameraPanel() {
     canvas.getContext("2d")?.drawImage(video, 0, 0, canvas.width, canvas.height);
     setFrameCount((count) => count + 1);
     setLastFrame(new Date().toLocaleTimeString("es-VE", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+
+    return canvas.toDataURL("image/jpeg", 0.72);
+  }
+
+  async function analyzeFrame() {
+    const frame = captureFrame();
+
+    if (!frame || analysisState === "analyzing") {
+      return;
+    }
+
+    setAnalysisState("analyzing");
+    setAnalysisError(null);
+
+    try {
+      const response = await fetch("/api/analyze-frame", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          frame,
+          source: deviceLabel,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("No se pudo analizar el frame.");
+      }
+
+      const result = (await response.json()) as AnalyzeResult;
+      setAnalysisResult(result);
+      setAnalysisState("ready");
+    } catch (error) {
+      setAnalysisState("error");
+      setAnalysisError(error instanceof Error ? error.message : "Fallo inesperado al analizar.");
+    }
   }
 
   const stateText = {
@@ -156,7 +237,21 @@ export function DeviceCameraPanel() {
               <ScanLine size={17} aria-hidden="true" />
               Capturar frame
             </button>
+            <button className="secondary-action" disabled={cameraState !== "live"} onClick={() => void analyzeFrame()} type="button">
+              {analysisState === "analyzing" ? <Loader2 className="spin-icon" size={17} aria-hidden="true" /> : <Activity size={17} aria-hidden="true" />}
+              Analizar frame
+            </button>
           </div>
+
+          <label className="auto-toggle">
+            <input
+              checked={autoAnalyze}
+              disabled={cameraState !== "live"}
+              onChange={(event) => setAutoAnalyze(event.target.checked)}
+              type="checkbox"
+            />
+            <span>Analisis automatico cada 3.5 s</span>
+          </label>
 
           <div className="live-readings" aria-label="Estado de captura">
             <div>
@@ -169,14 +264,59 @@ export function DeviceCameraPanel() {
             </div>
             <div>
               <span>Proximo paso</span>
-              <strong>Backend IA</strong>
+              <strong>{analysisResult ? `${analysisResult.latencyMs} ms` : "Backend IA"}</strong>
             </div>
           </div>
 
-          <div className="analysis-placeholder">
-            <Square size={14} aria-hidden="true" />
-            <p>La deteccion de casco, chaleco y persona se conectara a este mismo flujo.</p>
-          </div>
+          {analysisResult ? (
+            <div className="analysis-result" aria-label="Resultado de analisis IA simulado">
+              <div className="analysis-summary">
+                <div>
+                  <span>Personas</span>
+                  <strong>{analysisResult.summary.people}</strong>
+                </div>
+                <div>
+                  <span>Cumplimiento</span>
+                  <strong>{analysisResult.summary.compliance}%</strong>
+                </div>
+                <div>
+                  <span>Alertas</span>
+                  <strong>{analysisResult.summary.alerts}</strong>
+                </div>
+              </div>
+
+              <div className="detection-list">
+                {analysisResult.detections.map((detection) => (
+                  <div className={`detection-row ${detection.status}`} key={detection.id}>
+                    <div>
+                      <strong>{detection.label}</strong>
+                      <span>Conf. {detection.confidence.toFixed(2)}</span>
+                    </div>
+                    <em>{statusLabel[detection.status]}</em>
+                  </div>
+                ))}
+              </div>
+
+              {analysisResult.alerts.length ? (
+                <div className="alert-list">
+                  {analysisResult.alerts.map((alert) => (
+                    <p key={`${alert.type}-${alert.confidence}`}>
+                      {alert.type} - {alert.severity} - {alert.state}
+                    </p>
+                  ))}
+                </div>
+              ) : (
+                <p className="clear-analysis">Sin alertas simuladas en este frame.</p>
+              )}
+            </div>
+          ) : (
+            <div className="analysis-placeholder">
+              <Square size={14} aria-hidden="true" />
+              <p>Captura y analiza un frame para probar el circuito Medusa → API → resultado IA.</p>
+            </div>
+          )}
+
+          {analysisError ? <p className="analysis-error">{analysisError}</p> : null}
         </aside>
       </div>
 
@@ -184,3 +324,9 @@ export function DeviceCameraPanel() {
     </section>
   );
 }
+
+const statusLabel: Record<DetectionStatus, string> = {
+  ok: "OK",
+  warning: "Revision",
+  missing: "Falta",
+};
