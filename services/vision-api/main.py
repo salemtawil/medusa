@@ -39,6 +39,9 @@ class AnalyzeFrameResponse(BaseModel):
 
 
 app = FastAPI(title="Medusa Vision API", version="0.1.0")
+PERSON_CONFIDENCE_DEFAULT = "0.70"
+YOLO_IMAGE_SIZE_DEFAULT = "416"
+YOLO_MAX_DETECTIONS_DEFAULT = "6"
 
 app.add_middleware(
     CORSMiddleware,
@@ -54,7 +57,8 @@ def health() -> dict[str, str]:
     return {
         "status": "ok",
         "model": os.getenv("MEDUSA_YOLO_MODEL", "yolo11n.pt"),
-        "imageSize": os.getenv("MEDUSA_YOLO_IMAGE_SIZE", "320"),
+        "personConfidence": os.getenv("MEDUSA_PERSON_CONFIDENCE", PERSON_CONFIDENCE_DEFAULT),
+        "imageSize": os.getenv("MEDUSA_YOLO_IMAGE_SIZE", YOLO_IMAGE_SIZE_DEFAULT),
     }
 
 
@@ -73,9 +77,9 @@ def analyze_frame(payload: AnalyzeFrameRequest) -> AnalyzeFrameResponse:
     results = model.predict(
         image,
         classes=[0],
-        conf=float(os.getenv("MEDUSA_PERSON_CONFIDENCE", "0.35")),
-        imgsz=int(os.getenv("MEDUSA_YOLO_IMAGE_SIZE", "320")),
-        max_det=int(os.getenv("MEDUSA_YOLO_MAX_DETECTIONS", "12")),
+        conf=float(os.getenv("MEDUSA_PERSON_CONFIDENCE", PERSON_CONFIDENCE_DEFAULT)),
+        imgsz=int(os.getenv("MEDUSA_YOLO_IMAGE_SIZE", YOLO_IMAGE_SIZE_DEFAULT)),
+        max_det=int(os.getenv("MEDUSA_YOLO_MAX_DETECTIONS", YOLO_MAX_DETECTIONS_DEFAULT)),
         verbose=False,
     )
 

@@ -24,13 +24,13 @@ curl http://127.0.0.1:8000/health
 
 ```text
 MEDUSA_YOLO_MODEL=yolo11n.pt
-MEDUSA_PERSON_CONFIDENCE=0.35
-MEDUSA_YOLO_IMAGE_SIZE=320
-MEDUSA_YOLO_MAX_DETECTIONS=12
+MEDUSA_PERSON_CONFIDENCE=0.70
+MEDUSA_YOLO_IMAGE_SIZE=416
+MEDUSA_YOLO_MAX_DETECTIONS=6
 MEDUSA_ALLOWED_ORIGINS=*
 ```
 
-Para mas precision, sube `MEDUSA_YOLO_IMAGE_SIZE` a `416`, `512` o `640`, aceptando mas tiempo por frame.
+Para mas precision, sube `MEDUSA_YOLO_IMAGE_SIZE` a `512` o `640`, aceptando mas tiempo por frame. Para mas sensibilidad en escenas dificiles, baja `MEDUSA_PERSON_CONFIDENCE`, pero aumentaran los falsos positivos.
 
 ## Nota
 
